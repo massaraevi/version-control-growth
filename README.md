@@ -10,12 +10,21 @@ The primary purpose of this repository is to help us learn and practice using ve
 
 ## Getting started 
 
-1. "Clone" (copy) the repository to your computer
+### "Clone" (copy) the repository to your computer
+
  - At the top right corner of this page you will see a green button saying "Clone or download". 
  - After clicking this button, you will be given a series of options to copy the contents of the repository locally in your computer. The simplest option for you is the "Open in Desktop". 
  - This step requires to have the Github application installed in your computer. If you do not have the application, install it from here: https://desktop.github.com/. 
  - Once you have installed the application, you can return here and click the "Clone or download" button and then follow the instructions of the application. When the repository is cloned in your desktop you can find it in the directory that the application has created for you. Alternatively, you can open the repository locally by selecting Repository->Show in Explorer from the menu of the application.
  - From there, you can start working in Rstudio by setting this as your working directory in Rstudio. Go to Rstudio and from the menu go Session->Set Working Directory->Choose Directory... and pick the directory of the cloned repository. At the right bottom of the Rstudio screen in the "File" pane, choose More->Go To Working Directory. Now, you should be able to see the contents of the repository in your Rstudio screen. 
 
+### Make your first commit!
 
+- In the code directory of this project, there is a R file called "hello_world.R". Open it in your Rstudio and add a greeting under the last line.
+- This is your first change to the project. If you open the GitHub application, you will see that it has detected a changed file. You will need to commit this change so that it becomes visible and available to everybody else in the project.
+- The screen of the application is split in two parts. The right part contains the changes in the selected file. The left top part contains all the files that have been changed. You can select a file to see the changes in the right part. Under the list of changes there is a text field with your picture from GitHub. Add a short commit message there such as "Update hello_world.R". You can add more descriptive information in the text field below.
+- Once you have added all the messages and selected all files that you want to commit to the repository, you can hit the blue button that says "Commit to master".
+- You are not done yet! This action committed your changes to your local copy, but not to the actual repository! For this you will need to also hit the blue button "Push origin" that will appear in the next screen.
+- Attention! While you edit your code, somebody else may have edited the same files and have already pushed the changes to the repository, the GitHub application will not let you push your changes until you have pulled the previous changes. Follow the instructions of the application to first pull the latest version of the repository and then push your changes.
+- Congratulations! You just made your first contribution to a collaborative project! You can see your version in your browser and in the GitHub application as well.
 
