@@ -28,3 +28,12 @@ The primary purpose of this repository is to help us learn and practice using ve
 - Attention! While you edit your code, somebody else may have edited the same files and have already pushed the changes to the repository, the GitHub application will not let you push your changes until you have pulled the previous changes. Follow the instructions of the application to first pull the latest version of the repository and then push your changes.
 - Congratulations! You just made your first contribution to a collaborative project! You can see your version in your browser and in the GitHub application as well.
 
+### Collaborate through issues
+
+- Issues are a good way to track your tasks, communicate your work organizations with your team and coordinate your activities to fix bugs or provide enhancements. 
+- For example, when you find a problem in a R script that somebody else in the team is developping, instead of sending an email or an instant message (which is not recorded and may get lost), you can create an issue. 
+- In the issue, you specify a) a short description of the problem, issue, feature, b) the file that may be associated with this problem, c) the priority of this issue (if it is critical and needs to be fixed ASAP), d) a developer that will be responsible for this issue. 
+- Another example is the following. After a meeting you decide that you need to develop some new features. You create issues for this features and this way you can plan the development work.
+- Once the associated task is completed, you can close the issue and this notifies the rest of the team that this task is completed and ready to be used (without the need of an email). 
+- In the end the history of commits and issues constitutes the history of the project, where you can track a) everything that has happened, b) who did what, c) what problems occured during the project (so that you can avoid them) and others.
+
