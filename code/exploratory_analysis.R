@@ -53,6 +53,10 @@ library("flipTime")
 
 # =============================================================================================
 
+# Loading dataset
+
+Hospital_dataset<-read.csv(file.choose(),header=T)
+
 # Rename dataset 
 
 data<-Hospital_dataset
@@ -66,6 +70,7 @@ head(data, 6)
 missing_data<-data.frame(column=colnames(data), prc_value=round(colSums(is.na(data))/dim(data)[1], digits=3)*100)
 
 # Plot % missing data per index (column)
+
 plot(round(colSums(is.na(data))/dim(data)[1], digits=2)*100)
 
 # Which columns have more than 50% missing data? 
