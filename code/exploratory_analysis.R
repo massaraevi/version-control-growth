@@ -95,7 +95,7 @@ growth_data<-data[,growth_list]
 
 # Convert date of birth and calculate age
 
-growth_data<-mutate(mut_date_birth = AsDate(growth_data$Date_of_Birth)) 
+growth_data<-mutate(growth_data,mut_date_birth = AsDate(growth_data$Date_of_Birth)) 
 as.Date(growth_data$mut_date_birth) 
 growth_data<- mutate(growth_data,age= age_calc(growth_data$mut_date_birth, units='months'))
 
