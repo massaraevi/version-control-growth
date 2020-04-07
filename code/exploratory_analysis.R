@@ -48,7 +48,7 @@ if (! require(pastecs, quietly=TRUE)) {
   library(pastecs)
 }
 
-install_github("Displayr/flipTime")
+install_github("Displayr/flipTime", force = TRUE)
 library("flipTime")
 
 # =============================================================================================
