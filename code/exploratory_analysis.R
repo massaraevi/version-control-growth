@@ -55,7 +55,7 @@ library("flipTime")
 
 # Loading dataset
 
-Hospital_dataset<-read.csv(file.choose(),header=T)
+# Please load from R global environment. You should be able to see a dataframe with 5043 obs. 22
 
 # Rename dataset 
 
@@ -83,7 +83,18 @@ rownames(high_rate)
 low_rate<-missing_data[which(missing_data$prc_value<50),]
 rownames(low_rate)
 
-# ====== 3 Growth dataset========================================================================
+# ====== 3 Manipulate the dataset ========================================================================
+
+# Convert date of registration and outcome age
+
+data <-data %>% mutate(mut_reg_date = AsDate(data$Registration_Date)) %>% mutate(mut_out_date = AsDate(data$Outcome_Date)) 
+
+## Create a new variable – Duration of hospital stay – from Registration_Date and Outcome_Date
+
+data <- data %>% mutate(hospital_stay = as.numeric(mut_out_date-mut_reg_date)) # hospital_stay in days
+
+
+# ====== 4 Growth dataset========================================================================
 
 # Let's keep only the anthropometric measurements for now
 
