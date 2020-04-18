@@ -12,8 +12,9 @@
 #TOC> -----------------------------------------------------------------------------------------
 #TOC>   1        Packages                                          20
 #TOC>   2        Missing data exploration                          65   
-#TOC>   3        Growth dataset                                    82
-#TOC>   4        Compute descriptive statistics                    118                           
+#TOC>   3        Manipulate the dataset                            91
+#TOC>   4        Growth dataset                                    110
+#TOC>   5        Compute descriptive statistics                    146                           
 #TOC> =========================================================================================
 
 # ====    1  Packages  ========================================================================
@@ -98,6 +99,13 @@ data <-data %>% mutate(mut_reg_date = AsDate(data$Registration_Date)) %>% mutate
 
 data <- data %>% mutate(hospital_stay = as.numeric(mut_out_date-mut_reg_date)) # hospital_stay in days
 
+## Calculate weight gain 
+
+data <- data %>% mutate(weight_gain = as.numeric(Weight__kg_1-Discharged_Weight))
+
+## Calculate of rate of weight gain
+
+data <- data %>% mutate(rate_weight_gain = weight_gain/hospital_stay) # Kg/day
 
 # ====== 4 Growth dataset========================================================================
 
@@ -106,7 +114,7 @@ data <- data %>% mutate(hospital_stay = as.numeric(mut_out_date-mut_reg_date)) #
 clinical <- c("Patient_ID","Sex", "Date_of_Birth", "Odema","Diarrhoea_Exists", "Oedema","Oedema2",
               "Oedema3","Oedema4","Oedema5","Oedema6")
 
-anthro <- c("Length__cm_1", "Length__cm_2", "Length__cm_3", "Length__cm_4", "Length__cm_5", "Length__cm_6",
+anthro <- c("Discharged_Weight","Length__cm_1", "Length__cm_2", "Length__cm_3", "Length__cm_4", "Length__cm_5", "Length__cm_6",
             "Weight__kg_1", "Weight__kg_2", "Weight__kg_3", "Weight__kg_4", "Weight__kg_5", "Weight__kg_6",   
             "MUAC__in_mm_1", "MUAC__in_mm_2", "MUAC__in_mm_3", "MUAC__in_mm_4", "MUAC__in_mm_5", "MUAC__in_mm_6")
 
