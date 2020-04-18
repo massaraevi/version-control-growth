@@ -48,7 +48,7 @@ if (! require(pastecs, quietly=TRUE)) {
   library(pastecs)
 }
 
-install_github("Displayr/flipTime")
+install_github("Displayr/flipTime", force = TRUE)
 library("flipTime")
 
 # =============================================================================================
@@ -77,6 +77,11 @@ plot(round(colSums(is.na(data))/dim(data)[1], digits=2)*100)
 
 high_rate<-missing_data[which(missing_data$prc_value>=50),]
 rownames(high_rate)
+
+# Which columns have more than 20% missing data? 
+
+high_rate20<-missing_data[which(missing_data$prc_value>=20),]
+rownames(high_rate20)
 
 # Which columns have less than 50% missing data? 
 
