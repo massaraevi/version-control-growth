@@ -1,6 +1,7 @@
 
 
 
+
 ##===  Data Exploration ====
 
 ##=== ! SOS ! ======
@@ -52,7 +53,31 @@ if (!require(pastecs, quietly = TRUE)) {
   library(pastecs)
 }
 
-install_github("Displayr/flipTime", force = TRUE)
+if (!require("factoextra", quietly = TRUE)) {
+  install.packages("factoextra")
+  library(factoextra)
+}
+
+if (!require("naniar", quietly = TRUE)) {
+  install.packages("naniar")
+  library(naniar)
+}
+
+if (!require("FactoMineR", quietly = TRUE)) {
+  install.packages("FactoMineR")
+  library(FactoMineR)
+}
+
+if (!require("missMDA", quietly = TRUE)) {
+  install.packages("missMDA")
+  library(missMDA)
+}
+
+if (!require("VIM", quietly = TRUE)) {
+  install.packages("VIM")
+  library(VIM)
+}
+#install_github("Displayr/flipTime", force = TRUE)
 library("flipTime")
 
 
@@ -80,17 +105,17 @@ plot(round(colSums(is.na(data)) / dim(data)[1], digits = 2) * 100)
 
 # Which columns have more than 50% missing data?
 
-high_rate <- missing_data[which(missing_data$prc_value >= 50), ]
+high_rate <- missing_data[which(missing_data$prc_value >= 50),]
 rownames(high_rate)
 
 # Which columns have more than 20% missing data?
 
-high_rate20 <- missing_data[which(missing_data$prc_value >= 20),]
+high_rate20 <- missing_data[which(missing_data$prc_value >= 20), ]
 rownames(high_rate20)
 
 # Which columns have less than 50% missing data?
 
-low_rate <- missing_data[which(missing_data$prc_value < 50),]
+low_rate <- missing_data[which(missing_data$prc_value < 50), ]
 rownames(low_rate)
 
 # ====== 3 Manipulate the dataset ========================================================================
@@ -189,7 +214,7 @@ na_freq <-
     stringsAsFactors = F
   )
 for (i in 1:ncol(growth_data)) {
-  na_freq[i,] <-
+  na_freq[i, ] <-
     c(col = colnames(growth_data[i]), freq = as.numeric(sum(is.na(growth_data[, i]))))
   #print(paste0(colnames(growth_data[i]), ": ", sum(!is.na(growth_data[,i]))))
 }
@@ -198,7 +223,11 @@ na_freq$freq <- as.numeric(na_freq$freq)
 
 # Visualizations
 
-ggbarplot(na_freq[c(12:17),], x = "col", y = "freq")
+ggbarplot(na_freq[c(12:17), ], x = "col", y = "freq")
+
+gg_miss_var(growth_data)
+
+res <- summary(aggr(growth_data, sortVar = TRUE))$combinations
 
 # ====== 5 Clinical dataset========================================================================
 
@@ -256,7 +285,7 @@ na_freq <-
     stringsAsFactors = F
   )
 for (i in 1:ncol(clinical_data)) {
-  na_freq[i,] <-
+  na_freq[i, ] <-
     c(col = colnames(clinical_data[i]), freq = as.numeric(sum(is.na(clinical_data[, i]))))
   #print(paste0(colnames(growth_data[i]), ": ", sum(!is.na(growth_data[,i]))))
 }
@@ -265,9 +294,22 @@ na_freq$freq <- as.numeric(na_freq$freq)
 
 # Visualizations
 
-ggbarplot(na_freq[c(12:17),], x = "col", y = "freq")
+# Frequency of Nas per column
+gg_miss_var(clinical_data)
+
+# Number of missing entries in each variable and for certain combinations of variables
+res <- summary(aggr(clinical_data, sortVar = TRUE))$combinations
+
+# The points for which x (resp. y) is missing are represented in red along the y (resp. x) axis.
+# In addition, boxplots of the x and y variables are represented along the axes
+# with and without missing values (in red all variables x where y is missing, in blue all variables x where y is observed).
+
+marginplot(clinical_data[, c("Fever", "ESR")])
+
+# Dimentions reduction
+
 
 #====== 6 Compute descriptive statistics =================================================
 
-res <- stat.desc(growth_data[, -c(1:11, 30)])
+res <- stat.desc(growth_data[,-c(1:11, 30)])
 round(res, 2)
