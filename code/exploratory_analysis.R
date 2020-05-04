@@ -252,7 +252,7 @@ clinical <-
 biochemical <-
   c(
     "Hematocrit_PCV",
-    "Diff_Leucocyte_Count",
+   # "Diff_Leucocyte_Count",
     "Total_Leucocyte_Count",
     "Neutrophil",
     "Anion_Gap",
@@ -263,9 +263,14 @@ biochemical <-
     "Chloride"
   )
 
+# Diff_Leucocyte_Count has 100% Nas, so it will be excluded
 clinical_list <- c(clinical, biochemical)
 
 clinical_data <- data[, clinical_list]
+
+clinical_short <- data[,clinical]
+biochemical_short <- data[,biochemical]
+
 
 ## Convert character variables to numeric ("Yes" = 1, "No" = 0)
 
@@ -306,8 +311,22 @@ res <- summary(aggr(clinical_data, sortVar = TRUE))$combinations
 
 marginplot(clinical_data[, c("Fever", "ESR")])
 
-# Dimentions reduction
+# Dimentions reduction with PCA for incomplete data biochemical data
+# Biochemical data are continuous so a separate analysis will be conducted 
 
+nb <- estim_ncpPCA(biochemical_short , method.cv = "Kfold", verbose = FALSE)
+nb$ncp
+plot(0:5, nb$criterion, xlab = "nb dim", ylab = "MSEP")
+
+biochemical_short_df<-as.data.frame(biochemical_short)
+res.comp <- imputePCA(biochemical_short_df, ncp = 2) # iterativePCA algorithm
+res.comp$completeObs[1:3,] # the imputed data set
+
+imp <- as.data.frame(res.comp$completeObs)
+
+res.pca <- PCA(imp, ncp = 2, graph=FALSE)
+plot(res.pca, lab="quali");
+plot(res.pca, choix="var")
 
 #====== 6 Compute descriptive statistics =================================================
 
