@@ -34,6 +34,9 @@ list.of.packages <-
     "FactoMineR",
     "missMDA",
     "VIM",
+    "zscorer",
+    "rpart",
+    "rpart.plot",
     "flipTime"
   )
 
@@ -47,6 +50,9 @@ if (length(new.packages) > 0) {
 # load all packages
 lapply(list.of.packages, require, character.only = TRUE)
 
+install.packages("remotes")
+remotes::install_github("Displayr/flipTime")
+library(flipTime)
 
 # Loading dataset
 
@@ -63,8 +69,11 @@ head(data, 6)
 # ===== 2 Missing data exploration =============================================================
 
 missing_data <-
-  data.frame(column = colnames(data),
-             prc_value = round(colSums(is.na(data)) / dim(data)[1], digits = 3) * 100)
+  data.frame(
+    column = colnames(data),
+    prc_value = round(colSums(is.na(data)) / dim(data)[1], digits = 3) * 100,
+    stringsAsFactors = F
+  )
 
 # Plot % missing data per index (column)
 
@@ -72,17 +81,17 @@ plot(round(colSums(is.na(data)) / dim(data)[1], digits = 2) * 100)
 
 # Which columns have more than 50% missing data?
 
-high_rate <- missing_data[which(missing_data$prc_value >= 50), ]
+high_rate <- missing_data[which(missing_data$prc_value >= 50),]
 rownames(high_rate)
 
 # Which columns have more than 20% missing data?
 
-high_rate20 <- missing_data[which(missing_data$prc_value >= 20),]
+high_rate20 <- missing_data[which(missing_data$prc_value >= 20), ]
 rownames(high_rate20)
 
 # Which columns have less than 50% missing data?
 
-low_rate <- missing_data[which(missing_data$prc_value < 50),]
+low_rate <- missing_data[which(missing_data$prc_value < 50), ]
 rownames(low_rate)
 
 # ====== 3 Manipulate the dataset ========================================================================
@@ -109,7 +118,7 @@ data <-
   data %>% mutate(rate_weight_gain = (weight_gain * 1000) / hospital_stay * Weight__kg_1) # (gm/kg/day)
 
 ## Convert character variables to numeric ("Yes" = 1, "No" = 0)
-# 
+#
 # for (i in 1:ncol(data)) {
 #   if (is.character(data[[1, i]])) {
 #     data[, i] <-
@@ -117,8 +126,16 @@ data <-
 #   }
 # }
 
-data<-apply(data, 2, revalue,c("No"="0", "Yes"="1"))
-data <- as.data.frame(data)
+#data<-apply(data, 2, revalue,c("No"="0", "Yes"="1"))
+data <-
+  data.frame(lapply(data, function(x) {
+    gsub("\\<Yes\\>", "1", x)
+  }), stringsAsFactors = F)
+data <-
+  data.frame(lapply(data, function(x) {
+    gsub("\\<No\\>", "0", x)
+  }), stringsAsFactors = F)
+#data <- as.data.frame(data)
 
 # ====== 4 Growth dataset========================================================================
 
@@ -189,7 +206,7 @@ na_freq <-
     stringsAsFactors = F
   )
 for (i in 1:ncol(growth_data)) {
-  na_freq[i,] <-
+  na_freq[i, ] <-
     c(col = colnames(growth_data[i]), freq = as.numeric(sum(is.na(growth_data[, i]))))
   #print(paste0(colnames(growth_data[i]), ": ", sum(!is.na(growth_data[,i]))))
 }
@@ -198,7 +215,7 @@ na_freq$freq <- as.numeric(na_freq$freq)
 
 # Visualizations
 
-ggbarplot(na_freq[c(12:17),], x = "col", y = "freq")
+ggbarplot(na_freq[c(12:17), ], x = "col", y = "freq")
 
 gg_miss_var(growth_data)
 
@@ -207,6 +224,7 @@ res <- summary(aggr(growth_data, sortVar = TRUE))$combinations
 # ====== 5 Exploring Clinical and Biochemical datasets =========================
 clinical <-
   c(
+    "Patient_ID",
     "Diarrhoea_Exists",
     "Fever",
     "Night_Sweats",
@@ -225,6 +243,7 @@ clinical <-
 
 biochemical <-
   c(
+    "Patient_ID",
     "Hematocrit_PCV",
     # "Diff_Leucocyte_Count",
     "Total_Leucocyte_Count",
@@ -237,16 +256,16 @@ biochemical <-
     "Chloride"
   )
 
-# Diff_Leucocyte_Count has 100% Nas, so it will be excluded
+# NOTE: Diff_Leucocyte_Count has 100% Nas, so it will be excluded
+
+#------ Prepare the datasets
+
 clinical_list <- c(clinical, biochemical)
-
 clinical_data <- data[, clinical_list]
-
 clinical_short <- data[, clinical]
 biochemical_short <- data[, biochemical]
-biochemical_short <- apply(biochemical_short, 2, as.numeric)
 
-## Check for missing data in the clinical dataset
+##--------- Check for missing data in both datasets
 
 na_freq <-
   data.frame(
@@ -255,14 +274,14 @@ na_freq <-
     stringsAsFactors = F
   )
 for (i in 1:ncol(clinical_data)) {
-  na_freq[i,] <-
+  na_freq[i, ] <-
     c(col = colnames(clinical_data[i]), freq = as.numeric(sum(is.na(clinical_data[, i]))))
   #print(paste0(colnames(growth_data[i]), ": ", sum(!is.na(growth_data[,i]))))
 }
 
 na_freq$freq <- as.numeric(na_freq$freq)
 
-# Visualizations
+#-------- Visualizations
 
 # Frequency of Nas per column
 gg_miss_var(clinical_data)
@@ -276,9 +295,51 @@ res <- summary(aggr(clinical_data, sortVar = TRUE))$combinations
 
 marginplot(clinical_data[, c("Fever", "ESR")])
 
+## CLINICAL
+patients <- clinical_short[, 1]
+rownames(clinical_short) <- patient
+
+##--------- Check for missing data in the clinical dataset
+# Frequency of Nas per column
+gg_miss_var(clinical_short)
+res <- summary(aggr(clinical_short, sortVar = TRUE))$combinations
+
+# Since proportion of missingness is equal among the variables exclude these with Nas
+clinical_short <- na.omit(clinical_short)
+full_data_id_cl <- clinical_short$Patient_ID
+
+#-------- Detect and represent underlying structures
+
+# Multiple Correspondence Analysis (MCA).
+
+clinical_short <- clinical_short[,-1]
+res.mca <- MCA(clinical_short, ncp = 5, graph=TRUE)
+eig.val <- get_eigenvalue(res.mca)
+fviz_screeplot(res.mca, addlabels = TRUE, ylim = c(0,45))
+fviz_mca_var(res.mca, choice = "mca.cor", 
+             repel = TRUE, # Avoid text overlapping (slow)
+             ggtheme = theme_minimal())
+
+## BIOCHEMICAL
+patients <- biochemical_short[, 1]
+common_patients <- biochemical_short[which(!biochemical_short$Patient_ID %in% full_data_id_cl),] 
+rownames(biochemical_short) <- patients
+biochemical_short <- biochemical_short[, -1]
+biochemical_short <- apply(biochemical_short, 2, as.numeric)
+
+##--------- Check for missing data in the clinical dataset
+# Frequency of Nas per column
+gg_miss_var(as.data.frame(biochemical_short))
+res <- summary(aggr(biochemical_short, sortVar = TRUE))$combinations
+
+# Since proportion of missingness is equal among the variables exclude these with Nas
+#clinical_short <- na.omit(clinical_short)
+#full_data_id_cl <- clinical_short$Patient_ID
+
+#-------- PCA
 # Dimentions reduction with PCA for incomplete data biochemical data
-# Biochemical data are continuous so a separate analysis will be conducted  for
-# the clinical data
+# Biochemical data are continuous so a separate analysis will be conducted from
+# clinical data
 
 nb <-
   estim_ncpPCA(biochemical_short , method.cv = "Kfold", verbose = FALSE)
@@ -288,7 +349,7 @@ plot(0:5, nb$criterion, xlab = "nb dim", ylab = "MSEP")
 biochemical_short_df <- as.data.frame(biochemical_short)
 res.comp <-
   imputePCA(biochemical_short_df, ncp = 2) # iterativePCA algorithm
-res.comp$completeObs[1:3, ] # the imputed data set
+res.comp$completeObs[1:3,] # the imputed data set
 
 imp <- as.data.frame(res.comp$completeObs)
 
@@ -297,7 +358,31 @@ plot(res.pca, lab = "quali")
 
 plot(res.pca, choix = "var")
 
+
+eig.val <- get_eigenvalue(res.pca)
+fviz_screeplot(res.pca, addlabels = TRUE, ylim = c(0,45))
+fviz_pca_var(res.pca, choice = "pca.cor", 
+             repel = TRUE, # Avoid text overlapping (slow)
+             ggtheme = theme_minimal())
+
+fviz_cos2(res.pca, choice = "var", axes = 1:2)
+
+
+
 #====== 6 Compute descriptive statistics =================================================
 
-res <- stat.desc(growth_data[, -c(1:11, 30)])
-round(res, 2)
+#res <- stat.desc(growth_data[, -c(1:16, 37)])
+#round(res, 2)
+
+clinical_data2<-mutate(clinical_data[,-16],NAs=numeric(nrow(clinical_data)))
+
+for(i in 1:nrow(clinical_data)) {
+  row_t<-t(clinical_data[i,])
+  clinical_data2[i,]$NAs<-sum(is.na(row_t))
+}
+common_patients2<-clinical_data2[which(clinical_data2$NAs>10),]$Patient_ID
+
+clinical_data3<-clinical_data2[which(clinical_data2$NAs<11),]
+
+gg_miss_var(clinical_data3)
+res <- summary(aggr(clinical_data3[,-c(1,25)], sortVar = F,combined=T))$combinations
