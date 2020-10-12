@@ -18,7 +18,6 @@
 #TOC> =========================================================================================
 
 # ====    1  Packages  ========================================================================
-
 list.of.packages <-
   c(
     "ggplot2",
@@ -34,7 +33,8 @@ list.of.packages <-
     "FactoMineR",
     "missMDA",
     "VIM",
-    "flipTime"
+    "flipTime",
+    "zscorer"
   )
 
 # list any missing packages
@@ -47,31 +47,8 @@ if (length(new.packages) > 0) {
 # load all packages
 lapply(list.of.packages, require, character.only = TRUE)
 
-#install.packages("remotes")
-#remotes::install_github("Displayr/flipTime")
-#library(flipTime)
 
-install.packages("zscorer")
-library(zscorer)
-
-install.packages("rpart")
-library(rpart)
-
-install.packages("rpart.plot")
-library(rpart.plot)
-
-
-# Loading dataset
-
-# Please load from R global environment. You should be able to see a dataframe with 5043 obs. 22
-
-# Rename dataset
-
-data <- Hospital_dataset
-
-# Check dataset
-
-head(data, 6)
+data <- read.csv("F:/Dhaka/Dataset_2.csv")
 
 # ===== 2 Missing data exploration =============================================================
 
@@ -102,6 +79,9 @@ rownames(low_rate)
 
 # Convert date of registration and outcome age
 
+data$Date1<-ifelse(data$Date1=="", NA, data$Date1)
+data$Outcome_Date<-ifelse(data$Outcome_Date=="", NA, data$Outcome_Date)
+
 data <-
   data %>% mutate(mut_date1 = AsDate(data$Date1)) %>% mutate(mut_out_date = AsDate(data$Outcome_Date))
 
@@ -115,36 +95,27 @@ data <-
 data <-
   data %>% mutate(weight_gain = as.numeric(Discharged_Weight - Weight__kg_1))
 
-## Calculate of rate of weight gain
-#Rate of weight gain (gm/kg/day)=(( Discharged_Weight - Weight__kg_1) * 1000) / ((Outcome_Date - Date1) * Weight__kg_1)
+# Convert character variables to numeric ("Yes" = 1, "No" = 0)
 
-data <-
-  data %>% mutate(rate_weight_gain = (weight_gain * 1000) / hospital_stay * Weight__kg_1) # (gm/kg/day)
-
-## Convert character variables to numeric ("Yes" = 1, "No" = 0)
-# 
-# for (i in 1:ncol(data)) {
-#   if (is.character(data[[1, i]])) {
-#     data[, i] <-
-#       as.numeric(ifelse(data[, i] == "No", 0, 1))
-#   }
-# }
-
-#data<-apply(data, 2, revalue,c("No"="0", "Yes"="1"))
 data<-data.frame(lapply(data, function(x) {gsub("\\<Yes\\>", "1", x)}), stringsAsFactors = F)
 data<-data.frame(lapply(data, function(x) {gsub("\\<No\\>", "0", x)}), stringsAsFactors = F)
+
+# Convert character variables to numeric ("Male" = 1, "Female" = 2)
+
+data<-data.frame(lapply(data, function(x) {gsub("\\<Male\\>", "1", x)}), stringsAsFactors = F)
+data<-data.frame(lapply(data, function(x) {gsub("\\<Female\\>", "2", x)}), stringsAsFactors = F)
 #data <- as.data.frame(data)
 
-# ====== 4 Growth dataset========================================================================
+# ====== 4 Growth dataset ======================================================
 
-# Let's keep only the anthropometric measurements and oedema that might have effect on weight for now
+# Let's keep only the anthropometric measurements and oedema that might
+# have effect on weight for now
 
 clinical <-
   c(
     "Patient_ID",
     "Sex",
     "Date_of_Birth",
-    "Odema",
     "Oedema",
     "Oedema2",
     "Oedema3",
@@ -156,12 +127,15 @@ clinical <-
     "Date3",
     "Date4",
     "Date5",
-    "Date6"
+    "Date6",
+    "hospital_stay"
   )
 
 anthro <-
   c(
     "Discharged_Weight",
+    "Rate_weight_gain",
+    "weight_gain",
     "Length__cm_1",
     "Length__cm_2",
     "Length__cm_3",
@@ -183,17 +157,83 @@ anthro <-
   )
 
 growth_list <- c(clinical, anthro)
-
 growth_data <- data[, growth_list]
+
+for (i in anthro){
+  growth_data[,i] <- as.numeric(growth_data[,i])
+}
+
+# Calculate wfl z scores for all time points
+
+growth <-
+  addWGSR(
+    data = growth_data,
+    sex = "Sex",
+    firstPart = "Weight__kg_1",
+    secondPart = "Length__cm_1",
+    index = "wfl",
+    output = "wflz_1"
+  )
+
+growth <-
+  addWGSR(
+    data = growth_data,
+    sex = "Sex",
+    firstPart = "Weight__kg_2",
+    secondPart = "Length__cm_2",
+    index = "wfl",
+    output = "wflz_2"
+  )
+
+growth <-
+  addWGSR(
+    data = growth_data,
+    sex = "Sex",
+    firstPart = "Weight__kg_3",
+    secondPart = "Length__cm_3",
+    index = "wfl",
+    output = "wflz_3"
+  )
+
+growth <-
+  addWGSR(
+    data = growth_data,
+    sex = "Sex",
+    firstPart = "Weight__kg_4",
+    secondPart = "Length__cm_4",
+    index = "wfl",
+    output = "wflz_4"
+  )
+
+growth <-
+  addWGSR(
+    data = growth_data,
+    sex = "Sex",
+    firstPart = "Weight__kg_5",
+    secondPart = "Length__cm_5",
+    index = "wfl",
+    output = "wflz_5"
+  )
+
+growth <-
+  addWGSR(
+    data = growth_data,
+    sex = "Sex",
+    firstPart = "Weight__kg_6",
+    secondPart = "Length__cm_6",
+    index = "wfl",
+    output = "wflz_6"
+  )
 
 # Convert date of birth and calculate age
 
-growth_data <-
-  mutate(growth_data, mut_date_birth = AsDate(growth_data$Date_of_Birth))
-as.Date(growth_data$mut_date_birth)
-growth_data <-
-  mutate(growth_data,
-         age = age_calc(growth_data$mut_date_birth, units = 'months'))
+growth <-
+  mutate(growth, mut_date_birth = AsDate(growth$Date_of_Birth))
+as.Date(growth$mut_date_birth)
+growth <-
+  mutate(growth,
+         age = age_calc(growth$mut_date_birth, units = 'months'))
+
 
 # Check again the missing data in the growth dataset
 
@@ -218,6 +258,36 @@ ggbarplot(na_freq[c(12:17),], x = "col", y = "freq")
 gg_miss_var(growth_data)
 
 res <- summary(aggr(growth_data, sortVar = TRUE))$combinations
+
+# Type casting 
+
+
+growth_data$Sex<-as.factor(growth_data$Sex)
+growth_data$Oedema<-as.factor(growth_data$Oedema)
+growth_data$Discharged_Weight<-as.numeric(growth_data$Discharged_Weight)
+growth_data$Length__cm_1<-as.numeric(growth_data$Length__cm_1)
+growth_data$Weight__kg_1<-as.numeric(growth_data$Weight__kg_1)
+growth_data$MUAC__in_mm_1<-as.numeric(growth_data$MUAC__in_mm_1)
+growth_data$age<-as.numeric(growth_data$age)
+growth<-mutate(growth_data, sex_bin=as.numeric(growth_data$Sex))
+
+
+
+growth<-growth[,c(1,9,10,11)]
+data<-full_join(growth, clinical_data, by="Patient_ID")
+patients<-data$Patient_ID
+rownames(data)<-patients
+data<-data[,-1]
+#data<-full_join(data,clinical_data, by="Patient_ID")
+set.seed(100)
+train <- sample(nrow(data), 0.75*nrow(data), replace = FALSE)
+data_train <- data[train,]
+data_test <- data[-train,]
+
+
+dt<-rpart(wflz~., data = data_train)
+rpart.plot(dt)
+
 
 # ====== 5 Exploring Clinical and Biochemical datasets =========================
 clinical <-
@@ -296,7 +366,7 @@ res <- summary(aggr(clinical_data, sortVar = TRUE))$combinations
 
 marginplot(clinical_data[, c("Fever", "ESR")])
 
-# Dimentions reduction with PCA for incomplete data biochemical data
+# Dimensions reduction with PCA for incomplete data biochemical data
 # Biochemical data are continuous so a separate analysis will be conducted  for
 # the clinical data
 
@@ -317,17 +387,11 @@ plot(res.pca, lab = "quali")
 
 plot(res.pca, choix = "var")
 
-# Remove a doublicate patient ID
 clinical_data2<-clinical_data[,-16]
-
-# Remove ESR
 clinical_data2<-clinical_data2[,-20]
 
-# Add suspected_infection and suspected_electrolyte_imbalance columns
 clinical_data2<-mutate(clinical_data2, suspected_infection=character(nrow(clinical_data2)))
 clinical_data2<-mutate(clinical_data2, suspected_electrolyte_imbalance=character(nrow(clinical_data2)))
-
-# Add values 0 - 1 to the 2 new columns 
 
 for(i in 1:nrow(clinical_data2)) {
   if(!is.na(clinical_data2[i,]$Hematocrit_PCV) && !is.na(clinical_data2[i,]$Total_Leucocyte_Count) && !is.na(clinical_data2[i,]$Neutrophil)) {
@@ -345,7 +409,7 @@ for(i in 1:nrow(clinical_data2)) {
   }
 }
 
-cols<-c("Patient_ID", "Registration_Date", "Outcome_Date", "hospital_stay","Discharged_Weight", "Weight__kg_1")
+cols<-c("Patient_ID", "Registration_Date", "Outcome_Date", "Discharged_Weight", "Weight__kg_1")
 
 add_data<-data[,cols]
 
@@ -354,10 +418,9 @@ clinical_data3<-left_join(clinical_data2, add_data, by="Patient_ID")
 clinical_data3$Discharged_Weight<-as.numeric(clinical_data3$Discharged_Weight)
 clinical_data3$Weight__kg_1<-as.numeric(clinical_data3$Weight__kg_1)
 
-# # Calculate weight gain and weight loss
-# clinical_data3<-mutate(clinical_data3, Duration_hospital_stay=as.numeric(AsDate(clinical_data3$Outcome_Date)-AsDate(clinical_data3$Registration_Date)))
-# clinical_data3<-mutate(clinical_data3, Weight_Gain=clinical_data3$Discharged_Weight-clinical_data3$Weight__kg_1)
-# clinical_data3<-mutate(clinical_data3, rate_weight_gain=(clinical_data3$Weight_Gain*1000)/clinical_data3$Duration_hospital_stay)
+clinical_data3<-mutate(clinical_data3, Duration_hospital_stay=as.numeric(AsDate(clinical_data3$Outcome_Date)-AsDate(clinical_data3$Registration_Date)))
+clinical_data3<-mutate(clinical_data3, Weight_Gain=clinical_data3$Discharged_Weight-clinical_data3$Weight__kg_1)
+clinical_data3<-mutate(clinical_data3, rate_weight_gain=(clinical_data3$Weight_Gain*1000)/clinical_data3$Duration_hospital_stay)
 
 
 #====== 6 Compute descriptive statistics =================================================
@@ -397,3 +460,34 @@ clinical_data3$Weight__kg_1<-as.numeric(clinical_data3$Weight__kg_1)
 # 
 # dt<-rpart(wflz~., data = data_train)
 # rpart.plot(dt)
+
+set.seed(123)
+data_part1<-data[c(1, 232:233)]
+data_part2<-clinical_data2[c(1,24,25)]
+data2<-full_join(data_part1, data_part2, by="Patient_ID")
+data2<-na.omit(data2)
+data2$hospital_stay<-as.numeric(data2$hospital_stay)
+data2$weight_gain<-as.numeric(data2$weight_gain)
+data2$suspected_infection<-as.numeric(data2$suspected_infection)
+data2$suspected_electrolyte_imbalance<-as.numeric(data2$suspected_electrolyte_imbalance)
+data2<-data2[,-1]
+rf<-randomForest(weight_gain ~ .,data=data2, importance=T, proximity=T)
+print(rf)
+round(importance(rf),2)
+
+set.seed(123)
+data_part1<-data[c(1, 232, 234)]
+data_part2<-clinical_data2[c(1,24,25)]
+data2<-full_join(data_part1, data_part2, by="Patient_ID")
+data2<-na.omit(data2)
+data2$hospital_stay<-as.numeric(data2$hospital_stay)
+data2$rate_weight_gain<-as.numeric(data2$rate_weight_gain)
+data2$suspected_infection<-as.numeric(data2$suspected_infection)
+data2$suspected_electrolyte_imbalance<-as.numeric(data2$suspected_electrolyte_imbalance)
+data2<-data2[,-1]
+data2<-data2[-which(is.nan(data2$rate_weight_gain) | is.infinite(data2$rate_weight_gain)),]
+rf<-randomForest(rate_weight_gain ~ .,data=data2, importance=T, proximity=T)
+print(rf)
+round(importance(rf),2)
+setdiff(colnames(data), colnames(clinical_data2))
+setdiff(colnames(clinical_data2), colnames(data))
